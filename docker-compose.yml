@@ -40,6 +40,17 @@ services:
     cpus: 2
     mem_limit: 2g
 
+  adminer:
+    image: adminer:latest
+    container_name: graph_vs_relational_adminer
+    environment:
+      # Postgres ist beim Login im Dropdown schon vorausgewaehlt.
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
 volumes:
   pgdata:
   neo4jdata:
