@@ -15,6 +15,7 @@ pip install -r requirements.txt
 ```
 
 - PostgreSQL: `localhost:5432` (siehe `.env`)
+- Adminer (Postgres-Web-UI): http://localhost:8080 — System "PostgreSQL", Server `postgres`, Benutzer/Passwort/DB aus `.env`
 - Neo4j Browser: http://localhost:7474 (siehe `.env`)
 
 ## Projektstruktur
