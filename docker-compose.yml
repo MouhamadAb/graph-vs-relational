@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: graph_vs_relational_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-benchmark}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-benchmark}
+      POSTGRES_DB: ${POSTGRES_DB:-graphbench}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-benchmark}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Fairness-Punkt 4 (siehe docs/konzept.md): feste Ressourcengrenzen,
+    # damit Postgres und Neo4j sich nicht unkontrolliert CPU/RAM teilen.
+    cpus: 2
+    mem_limit: 2g
+
+  neo4j:
+    image: neo4j:5
+    container_name: graph_vs_relational_neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/benchmark123}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4jdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Gleiche Ressourcengrenzen wie Postgres, aus Fairness-Gruenden identisch gewaehlt.
+    cpus: 2
+    mem_limit: 2g
+
+volumes:
+  pgdata:
+  neo4jdata:
