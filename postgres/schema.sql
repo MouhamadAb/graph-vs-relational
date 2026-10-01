@@ -1,16 +1,20 @@
 -- Relationales Schema fuer den Facebook-Social-Circles-Datensatz.
 --
--- TODO (Team): Tabellen 'person' und 'friendship' entwerfen.
+-- Entschieden:
+--   - Kantenrichtung: EINE Zeile pro Paar, wie in facebook_combined.txt (Option A).
+--     D.h. Abfragen nach Kontakten brauchen "WHERE person_id = X OR friend_id = X".
+--   - IDs kommen direkt aus der Datei (0-4038), daher INTEGER statt SERIAL.
 --
--- Zu entscheiden:
---   - Kantenrichtung: eine Zeile pro ungerichteter Kante oder zwei (A->B und B->A)?
---   - Welche Indizes werden angelegt und warum?
---
--- CREATE TABLE person (
---     id ... PRIMARY KEY
--- );
---
--- CREATE TABLE friendship (
---     person_id ... REFERENCES person(id),
---     friend_id ... REFERENCES person(id)
--- );
+-- Noch offen: zusaetzliche Indizes auf friendship.person_id /
+-- friendship.friend_id. Bewusst noch nicht angelegt, bis die Index-Strategie
+-- fuer beide Systeme gemeinsam diskutiert wurde.
+
+CREATE TABLE person (
+    id INTEGER PRIMARY KEY
+);
+
+CREATE TABLE friendship (
+    person_id INTEGER NOT NULL REFERENCES person(id),
+    friend_id INTEGER NOT NULL REFERENCES person(id),
+    PRIMARY KEY (person_id, friend_id)
+);
