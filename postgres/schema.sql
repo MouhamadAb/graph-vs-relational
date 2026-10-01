@@ -1,0 +1,16 @@
+-- Relationales Schema fuer den Facebook-Social-Circles-Datensatz.
+--
+-- TODO (Team): Tabellen 'person' und 'friendship' entwerfen.
+--
+-- Zu entscheiden:
+--   - Kantenrichtung: eine Zeile pro ungerichteter Kante oder zwei (A->B und B->A)?
+--   - Welche Indizes werden angelegt und warum?
+--
+-- CREATE TABLE person (
+--     id ... PRIMARY KEY
+-- );
+--
+-- CREATE TABLE friendship (
+--     person_id ... REFERENCES person(id),
+--     friend_id ... REFERENCES person(id)
+-- );
