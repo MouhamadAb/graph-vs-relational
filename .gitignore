@@ -6,3 +6,7 @@ venv/
 .DS_Store
 Thumbs.db
 *.egg-info/
+
+# Rohdatensaetze (siehe docs/konzept.md Abschnitt 7 fuer Download-Links)
+/facebook/
+/facebook_combined.txt

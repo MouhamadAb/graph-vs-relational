@@ -168,6 +168,26 @@ Die Schlussfolgerung sollte erst aus den Messungen entstehen. Eine sinnvolle Erw
 - Stanford SNAP – Epinions Social Network: https://snap.stanford.edu/data/soc-Epinions1.html
 - GroupLens – MovieLens 1M: https://grouplens.org/datasets/movielens/1m/
 
+## Entscheidungen
+
+### Kantenrichtung (war Fairness-Punkt 1) — entschieden
+
+Untersuchung von `facebook_combined.txt` (88.234 Zeilen): jede Freundschaft kommt
+genau einmal vor, nie in beide Richtungen (z. B. `0 1`, aber nie zusätzlich `1 0`),
+keine Selbst-Schleifen, keine Duplikate.
+
+**Entscheidung: Option A** — die Datei wird so übernommen, wie sie ist (eine Zeile
+pro Paar). Konsequenzen für Schema/Queries:
+
+- **PostgreSQL** (`friendship(person_id, friend_id)`): Abfragen nach "Kontakte von X"
+  brauchen `WHERE person_id = X OR friend_id = X` — sonst wird die Hälfte der
+  Kontakte übersehen.
+- **Neo4j**: Pro Zeile eine Relationship `(a)-[:KNOWS]->(b)`. Abfragen müssen ein
+  **richtungsloses Pattern** `(x)-[:KNOWS]-(other)` verwenden, sonst wird ebenfalls
+  nur die Hälfte gefunden.
+- Beide Seiten (SQL `OR` / Cypher richtungslos) müssen durchgängig in allen T1–T7-
+  Queries so verwendet werden, damit die Ergebnisse fachlich identisch bleiben.
+
 ## Offene Punkte (noch zu entscheiden)
 
-Beim ersten Review wurden 10 unklare bzw. potenziell unfaire Stellen in diesem Konzept identifiziert (Kantenrichtung, Index-Strategie, Ressourcen-Parität der Container, Cold/Warm-Protokoll, widersprüchliche Skalierungsmethode in 3.4 vs. 7, Sampling-Verzerrung, Formatierungsabhängigkeit der Komplexitätsmetriken, Treiber-Overhead, Zeitpunkt der Speichermessung). Diese Diskussion wurde bewusst zurückgestellt, bis Workspace und Prototyp stehen — siehe Team-Besprechung, bevor die eigentlichen T1–T7-Queries implementiert werden.
+Beim ersten Review wurden 10 unklare bzw. potenziell unfaire Stellen in diesem Konzept identifiziert. Punkt 1 (Kantenrichtung) ist jetzt oben entschieden. Noch offen: Index-Strategie, Ressourcen-Parität der Container, Cold/Warm-Protokoll, widersprüchliche Skalierungsmethode in 3.4 vs. 7, Sampling-Verzerrung, Formatierungsabhängigkeit der Komplexitätsmetriken, Treiber-Overhead, Zeitpunkt der Speichermessung. Diese Diskussion wurde bewusst zurückgestellt, bis Workspace und Prototyp stehen — siehe Team-Besprechung, bevor die eigentlichen T1–T7-Queries implementiert werden.

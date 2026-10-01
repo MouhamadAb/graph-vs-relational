@@ -4,6 +4,11 @@
 // Kernlogik: bewusst von euch zu schreiben (Lernmodus, siehe CLAUDE.md).
 // Wichtig: Jede Query muss fachlich identische Ergebnisse liefern wie die
 // entsprechende SQL-Query in postgres/queries.sql.
+//
+// Entschieden (siehe docs/konzept.md "Entscheidungen"): pro Zeile der Rohdaten
+// wird genau eine Relationship (a)-[:KNOWS]->(b) angelegt. Deshalb IMMER
+// richtungslose Patterns verwenden, z.B. (x)-[:KNOWS]-(other), sonst wird nur
+// die Haelfte der Kontakte gefunden.
 
 // T1: Person anhand ID suchen (Baseline / einfacher Lookup)
 // TODO

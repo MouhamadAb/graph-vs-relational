@@ -14,6 +14,10 @@ python -m venv .venv && . .venv/Scripts/activate  # Windows
 pip install -r requirements.txt
 ```
 
+Datensatz (nicht im Repo, siehe `.gitignore`): `facebook_combined.txt` von
+https://snap.stanford.edu/data/ego-Facebook.html herunterladen, entpacken und
+im Projektroot ablegen.
+
 - PostgreSQL: `localhost:5432` (siehe `.env`)
 - Adminer (Postgres-Web-UI): http://localhost:8080 — System "PostgreSQL", Server `postgres`, Benutzer/Passwort/DB aus `.env`
 - Neo4j Browser: http://localhost:7474 (siehe `.env`)
