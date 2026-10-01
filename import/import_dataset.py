@@ -5,13 +5,13 @@ uebernommen, nicht verdoppelt.
 """
 
 import argparse
+import os
 from pathlib import Path
+from typing import Optional
 
 import psycopg2
 import psycopg2.extras
 from neo4j import GraphDatabase
-
-import os
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,7 +48,7 @@ def connect_neo4j():
     return GraphDatabase.driver(uri, auth=(user, password))
 
 
-def parse_edgelist(path: Path, limit_nodes: int | None) -> list[tuple[int, int]]:
+def parse_edgelist(path: Path, limit_nodes: Optional[int]) -> list[tuple[int, int]]:
     edges: list[tuple[int, int]] = []
     with path.open() as f:
         for line in f:
@@ -81,6 +81,15 @@ def import_into_postgres(conn, edges: list[tuple[int, int]]) -> None:
 
 
 def import_into_neo4j(driver, edges: list[tuple[int, int]]) -> None:
+    def _create_constraint(tx):
+        # Ohne diesen Constraint (der intern einen Index anlegt) muesste jedes
+        # MERGE unten alle bisherigen Person-Knoten durchsuchen - bei 88k
+        # Kanten auf langsamerer Hardware spuerbar langsam.
+        tx.run(
+            "CREATE CONSTRAINT person_id_unique IF NOT EXISTS "
+            "FOR (p:Person) REQUIRE p.id IS UNIQUE"
+        )
+
     def _write(tx, rows):
         tx.run(
             """
@@ -94,6 +103,7 @@ def import_into_neo4j(driver, edges: list[tuple[int, int]]) -> None:
 
     rows = [{"a": a, "b": b} for a, b in edges]
     with driver.session() as session:
+        session.execute_write(_create_constraint)
         session.execute_write(_write, rows)
 
 

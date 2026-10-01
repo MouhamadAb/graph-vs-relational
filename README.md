@@ -1,7 +1,8 @@
 # Graph vs. Relational
 
 Vergleich von PostgreSQL (relational) und Neo4j (Graph) anhand realer
-SNAP-Netzwerkdatensätze. Studentisches Miniprojekt.
+SNAP-Netzwerkdatensätze. Studentisches Miniprojekt. Ausführliche Schritt-für-Schritt-Anleitung inkl.
+Troubleshooting: [`docs/setup.md`](docs/setup.md).
 
 ## Setup
 
