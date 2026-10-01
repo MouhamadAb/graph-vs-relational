@@ -3,7 +3,8 @@
 Vergleich von PostgreSQL (relational) und Neo4j (Graph) anhand realer
 SNAP-Netzwerkdatensätze. Studentisches Miniprojekt, siehe [`docs/konzept.md`](docs/konzept.md)
 für das vollständige Konzept und [`CLAUDE.md`](CLAUDE.md) für die
-Zusammenarbeitsregeln.
+Zusammenarbeitsregeln. Ausführliche Schritt-für-Schritt-Anleitung inkl.
+Troubleshooting: [`docs/setup.md`](docs/setup.md).
 
 ## Setup
 
