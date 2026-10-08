@@ -101,6 +101,38 @@ Postgres:  4039 Knoten, 88234 Kanten
 Neo4j:     4039 Knoten, 88234 Kanten
 ```
 
+## 6. Benchmark ausführen
+
+```bash
+python benchmark/benchmark.py T1 --runs 50
+```
+
+Ergebnis landet als CSV in `results/<query_id>.csv` plus einer
+Zusammenfassung (Min/Max/Mittelwert/Median/Stddev) auf der Konsole.
+
+## 7. Skalierungstest (T7)
+
+T7 ist keine eigene Query, sondern T4 wiederholt auf unterschiedlich großen
+Teilmengen desselben Graphen (Snowball-/BFS-Sampling, siehe
+`docs/konzept.md` "Entscheidungen"). Workflow pro Größe:
+
+```bash
+python import/import_dataset.py facebook_combined.txt --reset --sample-nodes 1000 --seed 42
+python benchmark/benchmark.py T7 --runs 50
+cp results/T7.csv results/T7_n1000.csv   # sichern, bevor die naechste Groesse laeuft
+```
+
+Danach mit einer anderen `--sample-nodes`-Größe wiederholen. Am Ende, um
+wieder mit dem vollen Datensatz zu arbeiten:
+
+```bash
+python import/import_dataset.py facebook_combined.txt --reset
+```
+
+**Achtung:** `benchmark.py` überschreibt `results/T7.csv` bei jedem Lauf —
+die Datei nach jeder Größe wie oben sichern, sonst gehen frühere Messungen
+verloren.
+
 ## Häufige Fehlerquellen
 
 | Fehlermeldung (sinngemäß) | Ursache | Lösung |

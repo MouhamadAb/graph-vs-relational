@@ -49,8 +49,8 @@ MATCH (a:Person {id: $id1})-[:KNOWS]-(common)-[:KNOWS]-(b:Person {id: $id2})
 WHERE a <> b
 RETURN DISTINCT common;
 
-// T7: Skalierung (siehe Fairness-Punkt 6, noch offen: welche Sampling-Methode)
-// Keine eigene Query - T7 bedeutet, T4 (oder wahlweise T3) auf unterschiedlich
-// grossen Teilmengen der Daten zu wiederholen (siehe import_dataset.py
-// --limit-nodes). Die konkrete Teilmengen-/Sampling-Strategie ist Teil von
-// Fairness-Punkt 6 und noch nicht entschieden.
+// T7: Skalierung (Fairness-Punkt 6, entschieden: Teilmengen desselben Graphen)
+// Keine eigene Query - T7 ist T4, wiederholt auf unterschiedlich grossen
+// Teilmengen (Snowball-/BFS-Sampling mit festem Seed, siehe
+// import_dataset.py --sample-nodes/--seed und docs/konzept.md
+// "Entscheidungen"). benchmark.py fuehrt T7 deshalb identisch zu T4 aus.

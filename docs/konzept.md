@@ -188,6 +188,23 @@ pro Paar). Konsequenzen für Schema/Queries:
 - Beide Seiten (SQL `OR` / Cypher richtungslos) müssen durchgängig in allen T1–T7-
   Queries so verwendet werden, damit die Ergebnisse fachlich identisch bleiben.
 
+### Skalierungsmethode (war Fairness-Punkt 6) — entschieden
+
+Der Widerspruch zwischen Abschnitt 3.4 (Teilmengen desselben Datensatzes) und
+Abschnitt 7 (anderer SNAP-Datensatz) ist aufgelöst: **Teilmengen desselben
+Facebook-Graphen**, kein zweiter Datensatz. T7 ist dadurch keine neue Query,
+sondern T4 wiederholt auf unterschiedlich großen Teilmengen.
+
+**Sampling-Methode (Fairness-Punkt 7, teilweise mit entschieden):** Statt des
+naiven "erste N Knoten"-Cutoffs wird **Snowball-/BFS-Sampling mit festem Seed**
+verwendet (`import/import_dataset.py --sample-nodes N --seed S`): ab einem
+reproduzierbaren Startknoten werden so lange Nachbarn aufgenommen, bis N
+Knoten erreicht sind, danach der induzierte Teilgraph gebildet. Das hält die
+Teilmenge zusammenhängend — bevorzugt aber tendenziell dichter vernetzte
+Regionen um den Startknoten gegenüber einer echten Zufallsstichprobe. Diese
+Einschränkung muss im Abschlussbericht erwähnt werden (Fairness-Punkt 7 ist
+damit gemildert, nicht vollständig gelöst).
+
 ## Offene Punkte (noch zu entscheiden)
 
-Beim ersten Review wurden 10 unklare bzw. potenziell unfaire Stellen in diesem Konzept identifiziert. Punkt 1 (Kantenrichtung) ist jetzt oben entschieden. Noch offen: Index-Strategie, Ressourcen-Parität der Container, Cold/Warm-Protokoll, widersprüchliche Skalierungsmethode in 3.4 vs. 7, Sampling-Verzerrung, Formatierungsabhängigkeit der Komplexitätsmetriken, Treiber-Overhead, Zeitpunkt der Speichermessung. Diese Diskussion wurde bewusst zurückgestellt, bis Workspace und Prototyp stehen — siehe Team-Besprechung, bevor die eigentlichen T1–T7-Queries implementiert werden.
+Ursprünglich 10 unklare bzw. potenziell unfaire Stellen identifiziert. Entschieden: Punkt 1 (Kantenrichtung) und Punkt 6 (Skalierungsmethode), siehe "Entscheidungen" oben. Noch offen: Index-Strategie, Ressourcen-Parität der Container, Cold/Warm-Protokoll, Formatierungsabhängigkeit der Komplexitätsmetriken, Treiber-Overhead, Zeitpunkt der Speichermessung.

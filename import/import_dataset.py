@@ -2,15 +2,25 @@
 
 Hinweis: Schema (postgres/schema.sql) und dieses Import-Skript wurden auf
 ausdruecklichen Wunsch des Teams komplett fertig geschrieben (bewusste
-Ausnahme vom Lernmodus aus CLAUDE.md). Ab den T1-T7-Benchmark-Queries gilt
-der Lernmodus wieder: Kernlogik schreibt das Team selbst.
+Ausnahme vom Lernmodus aus CLAUDE.md, siehe Memory
+lernmodus-ausnahme-schema-import).
 
 Kantenrichtung (siehe docs/konzept.md "Entscheidungen", Option A): jede Zeile
 der Datei wird 1:1 als eine Zeile/Relationship uebernommen, nicht verdoppelt.
+
+Skalierung / Teilmengen (Fairness-Punkt 6, entschieden): Teilmengen desselben
+Graphen statt eines zweiten Datensatzes. Sampling-Methode (Fairness-Punkt 7):
+Snowball-/BFS-Sampling mit festem Seed statt naivem ID-Cutoff - siehe
+sample_subgraph(). Das erhaelt die lokale Graphstruktur (zusammenhaengend)
+viel eher als rein zufaellige Knotenauswahl, bevorzugt aber dadurch tendenziell
+dichter vernetzte Regionen um den Startknoten - diese Einschraenkung bitte im
+Abschlussbericht erwaehnen.
 """
 
 import argparse
 import os
+import random
+from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
@@ -23,15 +33,25 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Importiert einen SNAP-Edge-List-Datensatz.")
     parser.add_argument("edgelist_path", help="Pfad zur Edge-List-Datei (z. B. facebook_combined.txt)")
     parser.add_argument(
-        "--limit-nodes",
+        "--sample-nodes",
         type=int,
         default=None,
         help=(
-            "Optional: nur Kanten behalten, bei denen beide Knoten-IDs kleiner als "
-            "dieser Wert sind. Naive Teilmenge fuer schnelle Tests - siehe "
-            "Fairness-Punkt 7 (ID-Cutoff kann strukturell verzerrt sein, fuer den "
-            "echten Skalierungstest spaeter noch zu klaeren)."
+            "Optional: nur eine Teilmenge von N Knoten importieren (Snowball-/"
+            "BFS-Sampling ab einem zufaelligen, aber per --seed reproduzierbaren "
+            "Startknoten). Fuer den Skalierungstest T7."
         ),
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Zufalls-Seed fuer --sample-nodes, damit die Teilmenge reproduzierbar ist.",
+    )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Vor dem Import beide Datenbanken vollstaendig leeren (fuer wiederholte T7-Laeufe mit wechselnder Groesse).",
     )
     return parser.parse_args()
 
@@ -53,7 +73,7 @@ def connect_neo4j():
     return GraphDatabase.driver(uri, auth=(user, password))
 
 
-def parse_edgelist(path: Path, limit_nodes: Optional[int]) -> list[tuple[int, int]]:
+def parse_edgelist(path: Path) -> list[tuple[int, int]]:
     edges: list[tuple[int, int]] = []
     with path.open() as f:
         for line in f:
@@ -61,11 +81,48 @@ def parse_edgelist(path: Path, limit_nodes: Optional[int]) -> list[tuple[int, in
             if not line:
                 continue
             a_str, b_str = line.split()
-            a, b = int(a_str), int(b_str)
-            if limit_nodes is not None and (a >= limit_nodes or b >= limit_nodes):
-                continue
-            edges.append((a, b))
+            edges.append((int(a_str), int(b_str)))
     return edges
+
+
+def sample_subgraph(edges: list[tuple[int, int]], sample_size: int, seed: int) -> list[tuple[int, int]]:
+    """Snowball-/BFS-Sampling: ab einem festen Startknoten (per Seed) so lange
+    Nachbarn aufnehmen, bis sample_size Knoten erreicht ist. Danach werden alle
+    Kanten behalten, deren beide Enden in der Stichprobe liegen (induzierter
+    Teilgraph) - dadurch bleibt die Teilmenge zusammenhaengend, anders als bei
+    rein zufaelliger Knotenauswahl."""
+    rng = random.Random(seed)
+    adjacency: dict[int, set[int]] = defaultdict(set)
+    for a, b in edges:
+        adjacency[a].add(b)
+        adjacency[b].add(a)
+
+    start = rng.choice(sorted(adjacency.keys()))
+    visited = {start}
+    frontier = [start]
+    while frontier and len(visited) < sample_size:
+        current = frontier.pop(0)
+        neighbors = sorted(adjacency[current])
+        rng.shuffle(neighbors)
+        for n in neighbors:
+            if n not in visited:
+                visited.add(n)
+                frontier.append(n)
+                if len(visited) >= sample_size:
+                    break
+
+    return [(a, b) for a, b in edges if a in visited and b in visited]
+
+
+def reset_postgres(conn) -> None:
+    with conn.cursor() as cur:
+        cur.execute("TRUNCATE TABLE friendship, person RESTART IDENTITY")
+    conn.commit()
+
+
+def reset_neo4j(driver) -> None:
+    with driver.session() as session:
+        session.run("MATCH (n) DETACH DELETE n")
 
 
 def import_into_postgres(conn, edges: list[tuple[int, int]]) -> None:
@@ -132,12 +189,22 @@ def validate(conn, driver, expected_edges: list[tuple[int, int]]) -> None:
 
 def main() -> None:
     args = parse_args()
-    edges = parse_edgelist(Path(args.edgelist_path), args.limit_nodes)
+    edges = parse_edgelist(Path(args.edgelist_path))
     print(f"{len(edges)} Kanten aus {args.edgelist_path} gelesen.")
+
+    if args.sample_nodes is not None:
+        edges = sample_subgraph(edges, args.sample_nodes, args.seed)
+        node_count = len({n for edge in edges for n in edge})
+        print(f"Snowball-Sample (seed={args.seed}): {node_count} Knoten, {len(edges)} Kanten.")
 
     pg_conn = connect_postgres()
     neo4j_driver = connect_neo4j()
     try:
+        if args.reset:
+            reset_postgres(pg_conn)
+            reset_neo4j(neo4j_driver)
+            print("Beide Datenbanken wurden vor dem Import geleert.")
+
         import_into_postgres(pg_conn, edges)
         print("Import nach Postgres abgeschlossen.")
         import_into_neo4j(neo4j_driver, edges)

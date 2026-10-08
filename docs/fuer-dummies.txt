@@ -1,0 +1,117 @@
+WAS MACHEN WIR HIER EIGENTLICH? (Erklaerung fuer absolute Anfaenger)
+=====================================================================
+
+TEIL 1: DAS GROSSE BILD
+------------------------
+
+Stellt euch vor, ihr habt eine riesige Liste von Facebook-Freundschaften:
+"Person 0 kennt Person 1", "Person 0 kennt Person 2", und so weiter -
+88.234 solcher Freundschaften zwischen 4.039 anonymisierten Personen
+(nur Nummern, keine echten Namen, aus Datenschutzgruenden).
+
+Jetzt stellt euch zwei Arten vor, diese Liste zu speichern:
+
+  A) EXCEL-TABELLEN-STIL (PostgreSQL)
+     Eine Tabelle "Personen" (nur die IDs) und eine Tabelle
+     "Freundschaften" (zwei Spalten: wer kennt wen). Um herauszufinden,
+     wer mit wem befreundet ist, muss der Computer die Tabelle
+     durchsuchen und Zeilen miteinander "verknuepfen" (joinen).
+
+  B) PINNWAND-MIT-FAEDEN-STIL (Neo4j)
+     Jede Person ist ein Zettel an der Pinnwand, jede Freundschaft ist
+     ein Faden zwischen zwei Zetteln. Um herauszufinden, wer mit wem
+     befreundet ist, folgt der Computer einfach den Faeden - er muss
+     nicht "suchen", er "geht spazieren".
+
+UNSERE FRAGE: Welche der beiden Methoden ist schneller/einfacher, wenn
+die Fragen komplizierter werden? Z.B. "wer kennt jemanden, der jemanden
+kennt, der jemanden kennt" (3 Faeden weit) - ist das bei der
+Excel-Tabelle oder bei der Pinnwand einfacher?
+
+Das ist der ganze Sinn des Projekts: beide Methoden mit genau denselben
+Daten und denselben Fragen gegeneinander antreten lassen und die Zeit
+stoppen.
+
+
+TEIL 2: WAS IST DOCKER UND WARUM BRAUCHEN WIR DAS?
+----------------------------------------------------
+
+PostgreSQL und Neo4j sind beides Programme, die man normalerweise
+muehsam installieren und einrichten muesste. Docker ist wie eine
+"Fertigbox": man bestellt eine fertig eingerichtete Kiste mit
+PostgreSQL drin und eine zweite Kiste mit Neo4j drin, startet beide
+gleichzeitig, und muss sich um nichts weiter kuemmern. Will man
+aufraeumen, wirft man einfach die Kisten weg - der eigene Rechner bleibt
+sauber.
+
+
+TEIL 3: WAS HABEN WIR BISHER GEMACHT?
+----------------------------------------
+
+1. Die Facebook-Freundschaftsliste heruntergeladen (eine simple Textdatei
+   mit 88.234 Zeilen wie "0 1" = Person 0 kennt Person 1).
+2. Diese Liste in BEIDE Kisten geladen (einmal als Tabellen, einmal als
+   Pinnwand-Netzwerk) - beide enthalten danach exakt dieselben Daten,
+   nur unterschiedlich gespeichert.
+3. Sieben Testfragen (genannt T1 bis T7) in beiden "Sprachen" geschrieben
+   - einmal als SQL (Excel-Tabellen-Sprache), einmal als Cypher
+   (Pinnwand-Sprache). Von einfach ("Person Nummer 5 suchen") bis
+   kompliziert ("kuerzeste Verbindung zwischen zwei Personen finden").
+
+
+TEIL 4: DIE ZWEI NEUESTEN SCHRITTE, GANZ EINFACH ERKLAERT
+------------------------------------------------------------
+
+SCHRITT A - "T7": WAS PASSIERT, WENN DAS NETZWERK GROESSER WIRD?
+Stellt euch vor, "jemanden ueber 4 Ecken finden" ist leicht in einer
+Schulklasse mit 20 Leuten. Ist es genauso leicht in einer ganzen Stadt
+mit Millionen Leuten? Wahrscheinlich nicht - aber WIE VIEL schwerer wird
+es, und wird es bei der Excel-Methode oder bei der Pinnwand-Methode
+schneller schwieriger?
+
+Um das zu testen, braucht man "kleinere Staedte" zum Ueben - also
+kleinere Ausschnitte aus unserem Freundschaftsnetzwerk. Dafuer haben wir
+eine Methode gebaut, die bei einer zufaelligen (aber wiederholbaren)
+Person startet und sich wie ein Schneeball immer weiter zu den
+Nachbarn ausbreitet, bis die gewuenschte Anzahl Personen erreicht ist.
+So bekommt man eine "kleine Stadt", die noch zusammenhaengt (nicht
+einfach wild verstreute Einzelpersonen).
+
+Zusaetzlich gibt es jetzt einen "Reset-Knopf": vor jedem neuen Test mit
+einer anderen Groesse werden beide Kisten (Tabellen UND Pinnwand) erst
+komplett geleert, damit kein Rest vom letzten Test die Ergebnisse
+verfaelscht.
+
+SCHRITT B - DIE "STOPPUHR" (benchmark.py)
+Es reicht nicht, eine Frage EINMAL zu stellen und die Zeit zu stoppen -
+das waere wie ein einziger gewuerfelter Wurf, der zufaellig gut oder
+schlecht ausfallen kann. Stattdessen stellen wir dieselbe Frage 50 Mal
+hintereinander (mit leicht unterschiedlichen Personen, damit wir nicht
+nur einen "glücklichen" Einzelfall testen), stoppen jedes Mal die Zeit,
+und werfen die ersten paar Versuche weg (die zaehlen als "Aufwaermen" -
+so wie ein Auto beim ersten Start noch nicht optimal laeuft). Aus den
+restlichen Versuchen berechnen wir dann Durchschnitt, Median usw. - das
+ist fairer als sich auf einen einzigen Versuch zu verlassen.
+
+Diese Stoppuhr-Logik steckt jetzt fertig in `benchmark/benchmark.py` und
+schreibt die Ergebnisse automatisch in eine Tabelle (CSV-Datei) im
+Ordner `results/`.
+
+
+TEIL 5: WICHTIGE BEGRIFFE, DIE IMMER WIEDER AUFTAUCHEN
+----------------------------------------------------------
+
+- SQL = die "Sprache", mit der man die Excel-Tabellen-Datenbank
+  (PostgreSQL) nach Daten fragt.
+- Cypher = die "Sprache", mit der man die Pinnwand-Datenbank (Neo4j)
+  nach Daten fragt.
+- Query = eine einzelne "Frage" an eine Datenbank (z.B. "wer kennt
+  Person 5?").
+- Benchmark = der faire Wettkampf zwischen beiden Systemen mit Stoppuhr.
+- Node/Knoten = ein "Zettel" an der Pinnwand, also eine Person.
+- Relationship/Kante = ein "Faden" zwischen zwei Zetteln, also eine
+  Freundschaft.
+
+Fuer alles Technische/Detaillierte siehe docs/konzept.md (das eigentliche
+Projektkonzept) und docs/setup.md (Schritt-fuer-Schritt-Anleitung zum
+Nachmachen).
