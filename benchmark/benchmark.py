@@ -2,8 +2,10 @@
 schreibt die Messwerte als CSV.
 
 Bekannte, bewusst nicht geloeste Einschraenkungen:
-- Cold/Warm-Protokoll: hier nur ein einfaches Warmup+Messphasen-Schema,
-  kein Container-Neustart zwischen Laeufen.
+- Cold/Warm-Protokoll (ENTSCHIEDEN): Dieses Skript misst AUSSCHLIESSLICH
+  Warm-Runs (Warmup-Phase + Messphase, kein Container-Neustart zwischen
+  Laeufen). Es gibt keinen echten Cold-Run-Modus - das ist eine bewusste,
+  dokumentierte Entscheidung, nicht eine vergessene Funktion.
 - Treiber-Overhead: gemessen wird Ausfuehrung + Abholen der Ergebnisse
   ueber eine bereits offene Verbindung, nicht der Verbindungsaufbau
   selbst.
@@ -219,6 +221,8 @@ def main() -> None:
     args = parse_args()
     query = QUERIES[args.query_id]
     rng = random.Random(args.seed)
+
+    print(f"Hinweis: reine Warm-Run-Messung, kein Cold-Run-Vergleich. {args.warmup} Warmup-Laeufe werden verworfen, danach {args.runs} gemessene Laeufe.")
 
     pg_conn = connect_postgres()
     neo4j_driver = connect_neo4j()

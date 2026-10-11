@@ -16,8 +16,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    # Feste Ressourcengrenzen, damit Postgres und Neo4j sich nicht
-    # unkontrolliert CPU/RAM teilen.
+    # Feste, fuer beide Systeme IDENTISCHE Ressourcengrenzen. Bewusst NICHT erhoeht,
+    # obwohl Neo4j (JVM) davon im Leerlauf schon ~44% belegt (Postgres nur
+    # ~5,5%) - die gleiche Obergrenze ist die eigentlich faire Metrik, der
+    # hoehere JVM-Speicherbedarf ist eine zu dokumentierende Eigenschaft von
+    # Neo4j selbst, kein auszugleichender Nachteil.
     cpus: 2
     mem_limit: 2g
 

@@ -33,8 +33,20 @@ im Projektroot ablegen.
 └── docs/setup.md             # Setup-Anleitung
 ```
 
+## Benchmark & Skalierung
+
+```bash
+python benchmark/benchmark.py T1 --runs 50          # einzelne Query messen
+python benchmark/scaling_benchmark.py                # T7 ueber mehrere Groessen (automatisiert)
+python benchmark/plot_results.py                     # Diagramme aus results/*.csv erzeugen -> results/plots/
+```
+
+Details zum Skalierungs-Workflow: siehe `docs/setup.md`.
+
 ## Status
 
-Workspace-Grundgerüst steht. Offene methodische Fragen werden vor der
-Implementierung der eigentlichen Benchmark-Queries (T1–T7) gemeinsam
-geklärt.
+Workspace, Import, alle Queries (T1–T7) und das Mess-Harness sind fertig
+implementiert. Alle 10 ursprünglich identifizierten Fairness-/
+Unklarheitspunkte sind entschieden oder als dokumentierte Limitation
+festgehalten. Laufende Arbeit: systematische Benchmark-Messung aller
+Queries und Abschlussbericht.
