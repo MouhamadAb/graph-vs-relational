@@ -54,7 +54,10 @@ def plot_single_queries() -> None:
     ax.bar([i + width / 2 for i in x], neo_means, width, label="Neo4j")
     ax.set_xticks(list(x))
     ax.set_xticklabels(labels)
-    ax.set_ylabel("Mittlere Laufzeit (ms)")
+    ax.set_ylabel("Mittlere Laufzeit (ms, logarithmische Skala)")
+    # Log-Skala, weil T5 (Sekunden) und T1 (Millisekunden) sonst auf derselben
+    # linearen Achse nicht gleichzeitig lesbar waeren.
+    ax.set_yscale("log")
     ax.set_title("Laufzeitvergleich pro Query (Mittelwert ueber alle Laeufe)")
     ax.legend()
     fig.tight_layout()
