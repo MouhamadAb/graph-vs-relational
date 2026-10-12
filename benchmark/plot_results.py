@@ -269,8 +269,13 @@ def plot_t5_cold_vs_warm() -> None:
     x = range(len(labels))
     width = 0.35
     fig, ax = plt.subplots(figsize=(6, 5))
-    bars_warm = ax.bar([i - width / 2 for i in x], warm_s, width, label="Warm (Ø 50 Läufe)", color=[PG_COLOR, NEO_COLOR])
-    bars_cold = ax.bar([i + width / 2 for i in x], cold_s, width, label="Cold (Ø 3 Neustarts)", color=["#9fb8cc", "#f4bd8a"])
+    # Hier EINE Farbe pro Balkengruppe (warm/cold), nicht pro System - sonst
+    # zeigt die Legende nur die erste Farbe einer Gruppe an und der zweite
+    # Balken (z.B. Neo4j in Orange) taucht scheinbar "ohne Legende" auf. Die
+    # Systeme werden stattdessen schon ueber die X-Achsen-Beschriftung
+    # unterschieden.
+    bars_warm = ax.bar([i - width / 2 for i in x], warm_s, width, label="Warm (Ø 50 Läufe)", color=PG_COLOR)
+    bars_cold = ax.bar([i + width / 2 for i in x], cold_s, width, label="Cold (Ø 3 Neustarts)", color="#9fb8cc")
     ax.set_xticks(list(x))
     ax.set_xticklabels(labels)
     ax.set_ylabel("Mittlere Laufzeit (Sekunden)")
