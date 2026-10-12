@@ -105,9 +105,71 @@ def plot_scaling() -> None:
     print(f"Gespeichert: {out_path}")
 
 
+def plot_cold_vs_warm() -> None:
+    cold_path = RESULTS_DIR / "cold_start.csv"
+    if not cold_path.exists():
+        print("Keine cold_start.csv gefunden - Cold-vs-Warm-Diagramm wird ausgelassen.")
+        return
+    cold_rows = read_csv(cold_path)
+
+    # Warm-Referenz: T1-T6 aus T{n}.csv, T7 aus der vollen Skalierungsgroesse
+    # (T7_n4039.csv) - das ist dieselbe Datenmenge, die auch fuer die
+    # Cold-Messungen aktiv war.
+    labels, pg_cold, pg_warm, neo_cold, neo_warm = [], [], [], [], []
+    for i in range(1, 8):
+        qid = f"T{i}"
+        warm_path = RESULTS_DIR / (f"{qid}.csv" if i < 7 else "T7_n4039.csv")
+        if not warm_path.exists():
+            continue
+        warm_means = mean_by_system(read_csv(warm_path))
+        cold_means = mean_by_system([r for r in cold_rows if r["query"] == qid])
+        if not warm_means or not cold_means:
+            continue
+        labels.append(qid)
+        pg_warm.append(warm_means.get("postgres", 0))
+        pg_cold.append(cold_means.get("postgres", 0))
+        neo_warm.append(warm_means.get("neo4j", 0))
+        neo_cold.append(cold_means.get("neo4j", 0))
+
+    if not labels:
+        print("Keine passenden Warm-Referenzwerte gefunden - Cold-vs-Warm-Diagramm wird ausgelassen.")
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.5), sharey=True)
+    x = range(len(labels))
+    width = 0.35
+
+    axes[0].bar([i - width / 2 for i in x], pg_warm, width, label="Warm (Ø 50 Läufe)", color="#336791")
+    axes[0].bar([i + width / 2 for i in x], pg_cold, width, label="Cold (Ø 3 Neustarts)", color="#9fb8cc")
+    axes[0].set_title("PostgreSQL: Cold- vs. Warm-Start")
+    axes[0].set_xticks(list(x))
+    axes[0].set_xticklabels(labels)
+    axes[0].set_ylabel("Mittlere Laufzeit (ms, logarithmische Skala)")
+    axes[0].set_yscale("log")
+    axes[0].legend()
+
+    axes[1].bar([i - width / 2 for i in x], neo_warm, width, label="Warm (Ø 50 Läufe)", color="#E8720C")
+    axes[1].bar([i + width / 2 for i in x], neo_cold, width, label="Cold (Ø 3 Neustarts)", color="#f4bd8a")
+    axes[1].set_title("Neo4j: Cold- vs. Warm-Start")
+    axes[1].set_xticks(list(x))
+    axes[1].set_xticklabels(labels)
+    axes[1].set_yscale("log")
+    axes[1].legend()
+
+    fig.suptitle("Fairness-Gegenprobe: Auswirkung eines Container-Neustarts")
+    fig.tight_layout()
+
+    PLOTS_DIR.mkdir(exist_ok=True)
+    out_path = PLOTS_DIR / "cold_vs_warm.png"
+    fig.savefig(out_path)
+    plt.close(fig)
+    print(f"Gespeichert: {out_path}")
+
+
 def main() -> None:
     plot_single_queries()
     plot_scaling()
+    plot_cold_vs_warm()
 
 
 if __name__ == "__main__":
