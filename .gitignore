@@ -10,3 +10,7 @@ Thumbs.db
 # Rohdatensaetze (Download-Link siehe README.md)
 /facebook/
 /facebook_combined.txt
+
+# Office-Sperrdateien (werden automatisch angelegt, solange eine
+# .pptx/.docx/.xlsx Datei in Word/Excel/PowerPoint geoeffnet ist)
+~$*
