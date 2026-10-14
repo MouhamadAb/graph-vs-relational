@@ -46,11 +46,3 @@ Details zum Skalierungs-Workflow: siehe `docs/setup.md`.
 ## Ergebnisse
 
 Messwerte liegen als CSV in `results/*.csv`, Diagramme in `results/plots/`.
-
-## Status
-
-Projekt inhaltlich abgeschlossen: Workspace, Import, alle Queries (T1–T7),
-Mess-Harness, systematische Benchmarks (inkl. Skalierungstest über 5
-Größen), Fairness-Gegenprobe (M9) und Abschlussbericht sind fertig. Alle 10
-ursprünglich identifizierten Fairness-/Unklarheitspunkte sind entschieden
-oder als dokumentierte Limitation festgehalten.
