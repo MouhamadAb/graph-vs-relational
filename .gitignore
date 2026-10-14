@@ -14,3 +14,9 @@ Thumbs.db
 # Office-Sperrdateien (werden automatisch angelegt, solange eine
 # .pptx/.docx/.xlsx Datei in Word/Excel/PowerPoint geoeffnet ist)
 ~$*
+
+# Lokale Entwuerfe/Notizen
+/*.md
+!/README.md
+docs/*
+!docs/setup.md
