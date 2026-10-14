@@ -46,3 +46,8 @@ Details zum Skalierungs-Workflow: siehe `docs/setup.md`.
 ## Ergebnisse
 
 Messwerte liegen als CSV in `results/*.csv`, Diagramme in `results/plots/`.
+
+## Contributors
+
+- Mouhamad Abdallah
+- Christian Schönfeld
